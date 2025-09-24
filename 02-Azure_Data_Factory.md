@@ -203,6 +203,19 @@ Other optimizations:
 
 ---
 
+## 🔹 ADF Flowchart
+```mermaid
+flowchart LR
+Src[Source System] <--> LsSrc[Linked Service - Source]
+LsSrc <--> DsSrc[Source Dataset]
+DsSrc --> Act[ADF Activity (Copy/Transform)]
+Act --> DsTgt[Sink Dataset]
+DsTgt <--> LsTgt[Linked Service - Target]
+LsTgt <--> Tgt[Target System]
+```
+
+---
+
 ## 🔹 AWS vs Azure Mapping (Quick Reference)
 | AWS | Azure |
 |-----|-------|
