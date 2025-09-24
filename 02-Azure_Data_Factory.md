@@ -205,15 +205,12 @@ Other optimizations:
 
 ## 🔹 ADF Flowchart
 flowchart LR
-    SRC[Source system]
-    LSSRC[Linked service - source]
-    DSSRC[Source dataset]
-    ACT[ADF activity: Copy or Transform]
-    DSTGT[Sink dataset]
-    LSTGT[Linked service - target]
-    TGT[Target system]
-
-    SRC --> LSSRC --> DSSRC --> ACT --> DSTGT --> LSTGT --> TGT
+    SRC[Source system] --> LSSRC[Linked service - source]
+    LSSRC --> DSSRC[Source dataset]
+    DSSRC --> ACT[ADF activity (Copy/Transform)]
+    ACT --> DSTGT[Sink dataset]
+    DSTGT --> LSTGT[Linked service - target]
+    LSTGT --> TGT[Target system]
 
 ---
 
