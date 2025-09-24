@@ -121,9 +121,9 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    App[App / OLTP writes] --> Tx[(Cosmos DB - Transactional store)]
-    Tx -->|Synapse Link| An[(Cosmos DB - Analytical store)]
-    An --> Syn[Synapse (Serverless SQL / Spark)]
+    App[App - OLTP writes] --> Tx[(Cosmos DB Transactional)]
+    Tx -->|Synapse Link| An[(Cosmos DB Analytical)]
+    An --> Syn[Synapse Serverless SQL or Spark]
     Syn --> PBI[Power BI]
 ```
 
