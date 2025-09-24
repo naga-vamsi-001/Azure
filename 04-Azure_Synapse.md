@@ -42,9 +42,9 @@ Synapse provides multiple compute engines:
 
 ```mermaid
 flowchart LR
-    User[User / Analyst] -->|T-SQL Query| Serverless[Serverless SQL Pool]
-    Serverless -->|Reads Files| ADLS[ADLS / Blob Storage]
-    ADLS -->|Results| User
+    U[User / Analyst] -->|T-SQL query| Srv(Serverless SQL Pool)
+    Srv -->|reads files| ADLS[ADLS / Blob Storage]
+    ADLS -->|results| U
 ```
 
 👉 Best for **ad-hoc queries, data exploration, Power BI quick reports**.
@@ -58,10 +58,10 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    User[User / Analyst] -->|T-SQL Query| Dedicated[Dedicated SQL Pool (DWU/Mpp)]
-    Dedicated --> Storage[Synapse Distributed Storage]
-    ADLS[ADLS / Blob Storage] -->|Bulk Load / COPY INTO| Dedicated
-    Dedicated -->|Results| User
+    U[User / Analyst] -->|T-SQL query| Ded[Dedicated SQL Pool]
+    ADLS[ADLS / Blob Storage] -->|COPY INTO / Bulk load| Ded
+    Ded --> Store[Synapse distributed storage]
+    Ded -->|results| U
 ```
 
 👉 Best for **production BI dashboards, curated DW, heavy aggregations/joins**.
@@ -121,10 +121,10 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    App[App / OLTP Writes] --> CosmosDB[(Cosmos DB Transactional Store)]
-    CosmosDB -->|Synapse Link| Analytical[Cosmos DB Analytical Store (Replica)]
-    Analytical --> SynapseServerless[Synapse Serverless SQL / Spark Pools]
-    SynapseServerless --> PowerBI[Power BI Dashboard]
+    App[App / OLTP writes] --> Tx[(Cosmos DB - Transactional store)]
+    Tx -->|Synapse Link| An[(Cosmos DB - Analytical store)]
+    An --> Syn[Synapse (Serverless SQL / Spark)]
+    Syn --> PBI[Power BI]
 ```
 
 👉 **Benefit**: Business users get **near real-time analytics** without slowing down the production Cosmos DB.  
@@ -154,5 +154,5 @@ FROM OPENROWSET(
 - **Dedicated SQL Pool** = provisioned, optimized storage, best for BI dashboards.  
 - **Spark Pools** = transformations, ML, Delta Lake.  
 - **Data Explorer Pools** = logs, telemetry analytics.  
-- **Cosmos DB Analytical Store** enables near real-time analytics.  
-- **OPENROWSET** is the ad-hoc gateway to query files directly in ADLS.  
+- **Cosmos DB Analytical Store** = enables near real-time analytics with Synapse Link.  
+- **OPENROWSET** = ad-hoc gateway to query files directly in ADLS.  
