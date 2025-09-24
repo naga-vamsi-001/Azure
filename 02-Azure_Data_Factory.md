@@ -204,15 +204,16 @@ Other optimizations:
 ---
 
 ## 🔹 ADF Flowchart
-```mermaid
 flowchart LR
-Src[Source System] <--> LsSrc[Linked Service - Source]
-LsSrc <--> DsSrc[Source Dataset]
-DsSrc --> Act[ADF Activity (Copy/Transform)]
-Act --> DsTgt[Sink Dataset]
-DsTgt <--> LsTgt[Linked Service - Target]
-LsTgt <--> Tgt[Target System]
-```
+    SRC[Source system]
+    LSSRC[Linked service - source]
+    DSSRC[Source dataset]
+    ACT[ADF activity: Copy or Transform]
+    DSTGT[Sink dataset]
+    LSTGT[Linked service - target]
+    TGT[Target system]
+
+    SRC --> LSSRC --> DSSRC --> ACT --> DSTGT --> LSTGT --> TGT
 
 ---
 
