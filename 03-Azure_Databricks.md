@@ -1,7 +1,17 @@
 # Azure Databricks – Professional Learning Notes
 
-# SECTION 1: SPARK CLUSTER FUNDAMENTALS
+## 📌 What is Databricks?
+- **Azure Databricks** = a **cloud-based big data + AI platform**, built on **Apache Spark**.
+- Provides an **interactive workspace** for data engineers, data scientists, and analysts.
+- Key capabilities:
+  - **Data Engineering** → ETL/ELT pipelines on big data.
+  - **Data Science & ML** → MLflow, TensorFlow, PyTorch, Scikit-learn.
+  - **Analytics** → SQL queries, dashboards.
+- Deep integration with **Azure services (ADLS, Synapse, ADF, Power BI).**
 
+---
+
+# SECTION 1: SPARK CLUSTER FUNDAMENTALS
 ## 1. Spark Cluster Architecture
 
 A **Spark cluster** = multiple machines (nodes) working in parallel to process data faster than a single machine.
@@ -40,14 +50,6 @@ Data Distribution:
 5. **All executors process partitions simultaneously** ⚡
 6. Results aggregated at driver
 
-### Speed Comparison
-
-- **Single machine:** Chunk 1 (2h) → Chunk 2 (2h) → Chunk 3 (2h) = **6 hours**
-- **30-node cluster:** Chunks 1-30 in parallel = **2 hours** ✅ **(3x faster)**
-
-### ⚡ Quick Recall
-Driver = coordinator. Workers = processors. Partitions = data chunks. Parallel = fast.
-
 ---
 
 ## 2. Cluster Manager & Resources
@@ -56,8 +58,29 @@ The **Cluster Manager** allocates CPU/memory to executors and launches executor 
 
 Types: Spark Standalone (dev), YARN (Hadoop), Kubernetes (cloud-native), Azure Databricks (managed).
 
-### ⚡ Quick Recall
-Cluster Manager = resource allocator. Abstracted away in Databricks.
+## 🔹 Clusters
+- **Single Node Cluster**
+  - Driver + Worker on same VM.
+  - Best for dev/testing, small jobs.
+- **Multi-Node Cluster**
+  - Driver + multiple workers.
+  - Supports autoscaling and parallelism.
+- **Cluster Access Modes**
+  1. **Single User (Isolation)** → only one user/job runs.
+  2. **Shared Access** → multiple users share, supports Unity Catalog.
+  3. **Legacy (No Isolation)** → older mode, not recommended.
+- **Cluster Pools**
+  - Pre-warmed VMs to reduce startup time.
+  - Used with job clusters for faster execution.
+
+  ## 🔹 Nodes & Spot Instances
+- **Driver Node** → coordinates the Spark job (always keep on-demand).
+- **Worker Nodes** → execute tasks (can be spot to save cost).
+- **Spot Instance**
+  - Discounted VM (up to 80% cheaper).
+  - Can be evicted anytime if Azure needs capacity.
+  - Best for workers, not drivers.
+  - Good for ETL, stateless jobs.
 
 ---
 
@@ -75,9 +98,6 @@ Cluster Manager = resource allocator. Abstracted away in Databricks.
 - Integration with ADLS, Synapse, ADF, Power BI
 - Enterprise features (Unity Catalog, security, compliance)
 - Auto-scaling, cost controls
-
-### ⚡ Quick Recall
-Free = learning only. Cloud = production-ready with Azure integration.
 
 ---
 
@@ -100,9 +120,6 @@ Notebooks support **multiple languages** via magic commands. Built-in objects: `
 
 **Important:** Variables in `%python` ≠ accessible in `%sql`. Language contexts are isolated.
 
-### ⚡ Quick Recall
-Magic commands enable multi-language notebooks. Variables are isolated by language.
-
 ---
 
 ## 3B. Databricks UI Overview
@@ -119,9 +136,6 @@ Key sections of Databricks workspace:
 | **Catalog** | Unity Catalog browser (tables, views, volumes) |
 | **Settings** | Workspace configuration, secrets scopes |
 
-### ⚡ Quick Recall
-Main navigation: Workspace (code), Clusters (compute), Jobs (scheduling), SQL (queries), MLflow (ML), Catalog (governance).
-
 ---
 
 ## 4. Databricks Utilities (dbutils)
@@ -132,6 +146,12 @@ Built-in toolkit for file ops, secrets, parameters, and notebook orchestration.
 # File operations
 dbutils.fs.ls("/mnt/data/")
 dbutils.fs.cp("/src", "/dest")
+**DATA ACCESS**
+dbutils.fs.mount(
+  source = "abfss://raw@mydatalake.dfs.core.windows.net/",
+  mount_point = "/mnt/raw",
+  extra_configs = configs
+)
 
 # Secrets (secure)
 dbutils.secrets.get(scope="my-scope", key="api-key")
@@ -147,10 +167,6 @@ result = dbutils.notebook.run("/path/notebook", timeout_seconds=600, arguments={
 dbutils.jobs.taskValues.set("row_count", 1000000)
 count = dbutils.jobs.taskValues.get("row_count")
 ```
-
-### ⚡ Quick Recall
-dbutils = file ops (fs), secrets, parameters (widgets), orchestration (notebook), inter-task communication (jobs.taskValues).
-
 ---
 
 # SECTION 3: DATA STORAGE & ACCESS
@@ -171,9 +187,23 @@ ADLS = cloud storage with **hierarchical namespace** (folders, not flat key-valu
 
 **Important:** DBFS simplifies paths but **doesn't replace authentication**. Credentials still required.
 
-### ⚡ Quick Recall
-ADLS Gen2 = hierarchical cloud storage. DBFS = simplified access layer. Redundancy: LRS (cheap) → ZRS (HA) → GRS (DR).
+### Mounting ADLS/Blob
+1. **Access Key** (not secure, dev only).
+2. **SAS Token** (time-limited).
+3. **Service Principal (OAuth)** → best practice for production.
+4. **Direct `abfss://` access** → recommended with Unity Catalog + RBAC.
 
+```python
+# Example: Service Principal OAuth mount
+configs = {
+  "fs.azure.account.auth.type": "OAuth",
+  "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+  "fs.azure.account.oauth2.client.id": "<client-id>",
+  "fs.azure.account.oauth2.client.secret": dbutils.secrets.get(scope="myscope", key="mysecret"),
+  "fs.azure.account.oauth2.client.endpoint": "https://login.microsoftonline.com/<tenant-id>/oauth2/token"
+}
+
+```
 ---
 
 ## 6. Authentication & Secrets Management
@@ -221,9 +251,16 @@ spark.conf.set("fs.azure.account.oauth2.client.endpoint.<storage>.dfs.core.windo
 - ✅ Rotate secrets every 90 days
 - ✅ Prefer managed identity (no secrets)
 
-### ⚡ Quick Recall
-Service Principal = app identity. Key Vault = secure storage. Secret Scope = Databricks pointer. dbutils.secrets.get() = retrieve safely.
+## 🔹 Integration with ADF
+Ways to run Databricks from ADF:
+1. **Native Activity** → Databricks Notebook, Python, JAR activity.
+2. **REST API** → call Databricks Jobs API with Web Activity.
+3. **Azure Function/Logic App** → ADF triggers function, which triggers Databricks.
 
+Cluster options in ADF:
+- **New Job Cluster** → clean, reproducible (best for Prod).
+- **Existing Cluster** → fast startup (best for Dev).
+- **Cluster Pool** → faster startup by reusing warm VMs.
 ---
 
 # SECTION 4: DELTA LAKE
@@ -260,9 +297,6 @@ Stores **metadata about every transaction** (not business data):
 - Which Parquet files exist in current version
 - What changed (added/removed/modified rows)
 - Schema changes, timestamps, user info
-
-### ⚡ Quick Recall
-Delta = ACID table with _delta_log (transaction log). Enables time travel, rollback, schema evolution. Always use over plain files.
 
 ---
 
@@ -317,12 +351,14 @@ spark.sql("""
     WHEN NOT MATCHED THEN INSERT *
 """)
 ```
+## 🔹 Views in Databricks (Spark SQL)
+- **Temporary View** (`createOrReplaceTempView`) → session-scoped, vanishes after cluster stops.
+- **Global Temporary View** (`createOrReplaceGlobalTempView`) → lives in `global_temp` DB, accessible across notebooks in same cluster.
+- **Permanent View** (`CREATE VIEW`) → stored in metastore/Unity Catalog, persists across sessions.
+- **Replace Temp View** → overwrites an existing temp view.
 
 ### Metastore (Metadata Registry)
 Stores table metadata (schema, location, properties), view definitions, database structure. **Metastore ≠ data.** Data lives in cloud storage.
-
-### ⚡ Quick Recall
-Managed = Databricks owns, drop deletes data. External = you own, drop keeps data. CRUD easy with Delta. Merge = atomic upsert.
 
 ---
 
@@ -380,10 +416,6 @@ Mark rows as deleted without rewriting files. Makes DELETE/UPDATE/MERGE instant,
 Old: DELETE → Rewrite entire file (expensive)
 New: DELETE → Mark in _delta_log (cheap, lazy consolidation)
 ```
-
-### ⚡ Quick Recall
-Time Travel = query historical versions. OPTIMIZE = compact files. ZORDER = group values for skipping. VACUUM = delete old files. Deletion Vectors = mark deleted rows (don't rewrite).
-
 ---
 
 # SECTION 5: DATA INGESTION & ORCHESTRATION
@@ -425,9 +457,6 @@ df = (spark.readStream
 - `cloudFiles.format` = input format ("csv", "json", "parquet")
 - `cloudFiles.schemaLocation` = schema tracking path
 - `checkpointLocation` = stream progress tracking (tracks processed files)
-
-### ⚡ Quick Recall
-Auto Loader = checkpoint-based incremental ingestion. Detects + processes only new files. Supports schema evolution.
 
 ---
 
@@ -486,10 +515,6 @@ job = {
     "notifications": [{"on_failure": ["team@company.com"]}]
 }
 ```
-
-### ⚡ Quick Recall
-Jobs = scheduled orchestration with dependencies, retries, monitoring. Essential for production ETL.
-
 ---
 
 # SECTION 6: GOVERNANCE
@@ -591,10 +616,6 @@ spark.sql("""
     AS (region = current_user_region())
 """)
 ```
-
-### ⚡ Quick Recall
-UC = centralized governance (1 metastore per region). 3-level namespace. RBAC + column/row security. Manages storage credentials & external locations.
-
 ---
 
 ## 12B. Unity Catalog: Advanced Objects & Setup
@@ -670,10 +691,6 @@ Metastore: abfss://metastore-root@lake.dfs.core.windows.net/
 
 Table created in main.sales → Uses schema-level location if exists, else catalog, else metastore
 ```
-
-### ⚡ Quick Recall
-UC Objects: Credential (service/storage), Location (external), Share (read-only), Connection (federated). Metastore created in account console. Access Connector = managed identity for ADLS. Storage hierarchy: schema → catalog → metastore.
-
 ---
 
 # QUICK REFERENCE
