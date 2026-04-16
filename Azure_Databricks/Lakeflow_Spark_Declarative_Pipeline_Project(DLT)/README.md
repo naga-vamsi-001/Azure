@@ -68,6 +68,8 @@ Typical actions for invalid data:
 
 A quarantine design can also be implemented by routing bad records into a separate dataset.
 
+![expectations.png](https://raw.githubusercontent.com/naga-vamsi-001/Images/main/DLT_project/expectations.png)
+
 ## 8. Flows in DLT
 A pipeline is not only tables and views; it also includes how data is written into targets.
 
