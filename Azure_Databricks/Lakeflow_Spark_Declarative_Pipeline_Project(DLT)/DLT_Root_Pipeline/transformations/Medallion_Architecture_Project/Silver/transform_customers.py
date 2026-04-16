@@ -8,6 +8,15 @@ from pyspark.sql.types import *
 )
 
 def sales_stage_transformation():
+    """Transform customer data from Bronze to Silver layer.
+
+    Reads streaming customer data from the Bronze layer and applies
+    transformations including converting customer names to uppercase.
+    Creates a view for further processing in the Auto CDC flow.
+
+    Returns:
+        DataFrame: Transformed DataFrame with uppercase customer names.
+    """
     df = spark.readStream.table("customers_stg")
     df = df.withColumn("customer_name", upper(col("customer_name")))
     return df

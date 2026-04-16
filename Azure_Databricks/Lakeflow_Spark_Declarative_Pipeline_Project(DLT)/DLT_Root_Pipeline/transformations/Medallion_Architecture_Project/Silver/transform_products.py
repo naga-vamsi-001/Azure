@@ -8,6 +8,15 @@ from pyspark.sql.types import *
 )
 
 def sales_stage_transformation():
+    """Transform product data from Bronze to Silver layer.
+
+    Reads streaming product data from the Bronze layer and applies
+    transformations including casting price values to Integer type.
+    Creates a view for further processing in the Auto CDC flow.
+
+    Returns:
+        DataFrame: Transformed DataFrame with price values cast to Integer.
+    """
     df = spark.readStream.table("products_stg")
     df = df.withColumn("price", col("price").cast(IntegerType()))
     return df

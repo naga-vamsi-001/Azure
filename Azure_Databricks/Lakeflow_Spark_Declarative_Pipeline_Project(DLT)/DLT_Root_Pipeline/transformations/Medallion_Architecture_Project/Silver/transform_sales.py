@@ -7,6 +7,15 @@ from pyspark.sql.functions import *
 )
 
 def sales_stage_transformation():
+    """Transform sales data from Bronze to Silver layer.
+
+    Reads streaming sales data from the Bronze layer and applies
+    transformations including calculating total_amount by multiplying
+    quantity and amount columns.
+
+    Returns:
+        DataFrame: Transformed DataFrame with calculated total_amount.
+    """
     df = spark.readStream.table("sales_stg")
     df = df.withColumn("total_amount", col("quantity") * col("amount"))
     return df
